@@ -8,7 +8,7 @@
 
     - Api: https://dev.socrata.com/foundry/www.datos.gov.co/j7js-yk74
 
-- *Declaración de producci+on de gas:* Ministerio de Minas y Energía se permite publicar la declaración de producción realizada por los productores, productores comercializadores de gas natural y comercializadores de gas natural importado.
+- *Declaración de producción de gas:* Ministerio de Minas y Energía se permite publicar la declaración de producción realizada por los productores, productores comercializadores de gas natural y comercializadores de gas natural importado.
 
     - Autor(es): Ministerio de Minas y Energía
 
