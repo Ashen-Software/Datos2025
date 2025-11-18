@@ -1,248 +1,222 @@
-# Arquitectura del Sistema - Reto Gas Natural
+Arquitectura Detallada
+----------------------
 
-## 📋 Resumen del Reto
+### 1\. Orquestación y Ejecución (GitHub Actions)
 
-**Objetivo General:** Desarrollar un proceso ETL automatizado que integre datos públicos de producción, demanda y regalías de gas natural, consolidándolos en un dashboard interactivo para consulta y análisis en tiempo real.
+#### Workflows Implementados
 
-**Objetivos Específicos:**
-- OE1: Diseñar e implementar proceso ETL que extraiga y consolide datos de ANH, MME y UPME
-- OE2: Generar archivo de salida actualizado (Excel/CSV) con información estandarizada y validada
-- OE3: Construir dashboard interactivo para visualizar evolución por entidad, período y territorio
+**check-updates.yml** (Liviano - Ejecución Semanal/Mensual)
 
-## 🏗️ Arquitectura Propuesta
+*   **Trigger:** Cron programado + activación manual
+    
+*   **Función:** Verifica cambios en fuentes usando Requests + BeautifulSoup
+    
+*   **Salida:** Dispara ETL completo solo si detecta cambios
+    
+*   **Costo:** Mínimo (ejecución rápida sin contenedores)
+    
 
-### Componentes Principales
+**full-etl.yml** (Completo - Solo cuando hay cambios)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        FRONTEND                              │
-│  Dashboard Interactivo (React + D3.js/Chart.js)            │
-│  - Visualizaciones de producción, demanda y regalías       │
-│  - Filtros por entidad, período, territorio                │
-│  - Exportación de datos                                     │
-└──────────────────────┬──────────────────────────────────────┘
-                       │ HTTP/REST API
-┌──────────────────────┴──────────────────────────────────────┐
-│                        BACKEND                               │
-│  API REST (FastAPI)                                          │
-│  - Endpoints para consulta de datos                         │
-│  - Autenticación y autorización                              │
-│  - Exportación de archivos (Excel/CSV)                      │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────┴──────────────────────────────────────┐
-│                    BASE DE DATOS                             │
-│  PostgreSQL / SQLite                                         │
-│  - Almacenamiento de datos consolidados                     │
-│  - Histórico de ejecuciones ETL                             │
-│  - Metadatos de fuentes                                      │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────┴──────────────────────────────────────┐
-│                    PROCESO ETL                               │
-│  Scripts Python (Scheduled Tasks)                            │
-│  ├── Extract: Scraping/API de ANH, MME, UPME               │
-│  ├── Transform: Limpieza, validación, estandarización        │
-│  └── Load: Carga a BD y generación de archivos              │
-└─────────────────────────────────────────────────────────────┘
-```
+*   **Trigger:** Desde check-updates o manual
+    
+*   **Contenedor:** Playwright + Python para extracción robusta
+    
+*   **Proceso:** Extracción → Transformación → Carga
+    
+*   **Costo:** Solo cuando es necesario (2-3 meses)
+    
 
-## 🛠️ Stack Tecnológico
+### 2\. Sistema de Logs y Monitorización
 
-### Frontend
-- **Framework:** React 18+ con TypeScript
-- **Visualización:** 
-  - Recharts o Chart.js para gráficos
-  - Leaflet o Mapbox para mapas de Colombia
-- **UI Components:** Material-UI o Ant Design
-- **Estado:** React Query para gestión de datos del servidor
-- **Build:** Vite
+#### Estrategia de Logs Multi-nivel
 
-### Backend
-- **Framework:** FastAPI (Python)
-- **ORM:** SQLAlchemy
-- **Validación:** Pydantic
-- **Documentación:** Swagger/OpenAPI automático
+**Nivel 1: Logs Estructurados en GitHub Actions**
 
-### ETL
-- **Lenguaje:** Python 3.11+
-- **Librerías:**
-  - `pandas` - Manipulación de datos
-  - `requests` / `httpx` - Extracción de datos
-  - `beautifulsoup4` / `selenium` - Web scraping si es necesario
-  - `openpyxl` / `xlsxwriter` - Generación de Excel
-  - `sqlalchemy` - Conexión a base de datos
-  - `pydantic` - Validación de datos
-  - `schedule` / `APScheduler` - Programación de tareas
+*   Logs nativos de ejecución de workflows
+    
+*   Captura de stdout/stderr de todos los scripts
+    
+*   Retención automática según política de GitHub
 
-### Base de Datos
-- **Producción:** PostgreSQL
-- **Desarrollo:** SQLite (para simplicidad inicial)
+**Nivel 2: Métricas de Performance**
 
-### Infraestructura
-- **Contenedores:** Docker y Docker Compose
-- **Orquestación ETL:** 
-  - APScheduler para ejecución programada
-  - Alternativa: GitHub Actions / Cron jobs
+*   Tiempos de ejecución por fuente
+    
+*   Volumen de datos procesados
+    
+*   Tasa de éxito/error por componente
+    
 
-## 📁 Estructura del Proyecto
+#### Sistema de Alertas Multi-canal
 
-```
-Datos2025/
-├── frontend/                 # Aplicación React
-│   ├── src/
-│   │   ├── components/       # Componentes reutilizables
-│   │   ├── pages/            # Páginas principales
-│   │   ├── services/         # Clientes API
-│   │   ├── hooks/            # Custom hooks
-│   │   └── utils/            # Utilidades
-│   ├── public/
-│   └── package.json
-│
-├── backend/                  # API FastAPI
-│   ├── app/
-│   │   ├── api/              # Endpoints
-│   │   ├── models/           # Modelos SQLAlchemy
-│   │   ├── schemas/          # Schemas Pydantic
-│   │   ├── services/         # Lógica de negocio
-│   │   └── main.py           # Aplicación principal
-│   ├── alembic/              # Migraciones DB
-│   └── requirements.txt
-│
-├── data/                     # Scripts ETL y scrapers
-│   ├── extractors/           # Extractores por fuente
-│   │   ├── anh.py            # Extracción ANH
-│   │   ├── mme.py            # Extracción MME
-│   │   └── upme.py           # Extracción UPME
-│   ├── transformers/         # Transformadores
-│   │   ├── standardizer.py   # Estandarización
-│   │   └── validator.py      # Validación
-│   ├── loaders/              # Cargadores
-│   │   ├── database.py       # Carga a BD
-│   │   └── file_generator.py # Generación Excel/CSV
-│   ├── orchestrator.py       # Orquestador ETL
-│   └── requirements.txt
-│
-├── docker-compose.yml        # Orquestación de servicios
-├── .env.example              # Variables de entorno
-└── README.md
-```
+**1\. GitHub Native Integrations**
 
-## 🔄 Flujo de Datos
+*   Notificaciones email nativas sobre fallos de workflows
+    
+*   Configuración directa en repository settings
 
-### 1. Proceso ETL (Automático - Diario/Semanal)
+**2\. Custom Email Service**
 
-```
-┌─────────────┐
-│   Fuentes   │
-│  ANH, MME,  │
-│    UPME     │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  EXTRACT    │  ← Scraping/API calls
-│  (Raw Data) │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│ TRANSFORM   │  ← Limpieza, validación, estandarización
-│ (Cleaned)   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   LOAD      │  ← Carga directa a BD + Generación Excel/CSV
-│ (Database)  │
-└─────────────┘
-```
+*   Servicio SMTP gratuito (SendGrid, Mailjet free tier)
+    
+*   Notificaciones para stakeholders no técnicos
+    
 
-### 2. Consulta de Usuario
+### 3\. Procesamiento de Datos (ETL)
 
-```
-Usuario → Frontend → Backend API → Base de Datos → Respuesta JSON → Visualización
-```
+#### Tecnologías Clave
 
-## 📊 Modelo de Datos
+*   **Python 3.9+**: Lenguaje principal
+    
+*   **Playwright**: Extracción robusta en sitios complejos
+    
+*   **Pandas**: Transformación y limpieza de datos
+    
+*   **BeautifulSoup**: Scraping liviano para detección
+    
+*   **Supabase Python Client**: Carga eficiente
+    
 
-### Tablas Principales
+#### Estrategia de Procesamiento
 
-1. **gas_production** - Producción de gas natural
-   - id, fecha, campo, entidad, volumen, unidad, territorio
+1.  **Extracción Resiliente**: Reintentos automáticos con backoff
+    
+2.  **Validación en Tiempo Real**: Schemas, rangos, consistencia
+    
+3.  **Procesamiento Incremental**: Solo datos nuevos/cambiados
+    
+4.  **Idempotencia**: UPSERTs para evitar duplicados
+    
 
-2. **gas_demand** - Demanda de gas natural
-   - id, fecha, sector, entidad, volumen, unidad, territorio
+### 4\. Almacenamiento y Backend (Supabase)
 
-3. **gas_royalties** - Regalías de gas natural
-   - id, fecha, campo, entidad, monto, territorio
+#### Esquema de Base de Datos
 
-4. **etl_executions** - Historial de ejecuciones ETL
-   - id, fecha_ejecucion, fuente, estado, registros_procesados, errores
+DEFINIR
 
-5. **data_sources** - Metadatos de fuentes
-   - id, nombre, url, tipo, ultima_actualizacion
+#### Optimizaciones para Dashboard
 
-## 🔌 Endpoints API Propuestos
+*   Vistas materializadas para consultas frecuentes
+    
+*   Índices en campos de filtro común (fecha, entidad, territorio)
+    
+*   Políticas RLS para seguridad de datos
+    
 
-### Datos
-- `GET /api/v1/production` - Producción con filtros
-- `GET /api/v1/demand` - Demanda con filtros
-- `GET /api/v1/royalties` - Regalías con filtros
-- `GET /api/v1/consolidated` - Datos consolidados
+### 5\. Frontend y Despliegue
 
-### Exportación
-- `GET /api/v1/export/excel` - Descargar Excel consolidado
-- `GET /api/v1/export/csv` - Descargar CSV consolidado
+#### Stack Tecnológico
 
-### Metadatos
-- `GET /api/v1/sources` - Información de fuentes
-- `GET /api/v1/executions` - Historial de ejecuciones ETL
-- `GET /api/v1/stats` - Estadísticas generales
+*   **Angular 16+**: Framework principal
+    
+*   **Tailwind CSS**: Estilización y responsive design
+    
+*   **Supabase JS Client**: Conexión directa a datos
+    
+*   **Chart.js/NGX-Charts**: Visualizaciones de datos
+    
 
-## ⚙️ Automatización ETL
+#### Estrategia de Despliegue
 
-### Opciones de Ejecución
+*   **Vercel/Netlify**: Despliegue continuo desde main branch
+    
+*   **Variables de Entorno**: Configuración segura de endpoints
+    
+*   **CDN Global**: Distribución optimizada de assets
+    
 
-1. **APScheduler** (Recomendado para desarrollo)
-   - Ejecución programada dentro de la aplicación
-   - Fácil de configurar y depurar
+Plan de Implementación por Hitos
+--------------------------------
 
-2. **Cron Jobs** (Producción)
-   - Tareas programadas del sistema
-   - Más robusto para producción
+### Hito 1: Infraestructura Base
 
-3. **GitHub Actions** (Alternativa)
-   - Si se requiere ejecución en la nube
-   - Útil para CI/CD
+*   Configuración de repositorio y GitHub Actions
+    
+*   Esquema de base de datos en Supabase
+    
+*   Sistema de logging básico
+    
 
-### Frecuencia Sugerida
-- **Producción:** Diaria (cada 24 horas)
-- **Demanda:** Semanal (según disponibilidad de datos)
-- **Regalías:** Mensual (según ciclo de liquidación)
+### Hito 2: Detección de Cambios
 
-## 🔒 Consideraciones de Seguridad
+*   Scrapers livianos para las 3 fuentes
+    
+*   Lógica de comparación y trigger
+    
+*   Configuración de alertas básicas
+    
 
-- Validación de inputs en API
-- Rate limiting
-- CORS configurado apropiadamente
-- Variables de entorno para credenciales
-- Logging de operaciones críticas
+### Hito 3: ETL Completo
 
-## 📈 Escalabilidad
+*   Contenedor Playwright + dependencias
+    
+*   Pipelines de transformación por fuente
+    
+*   Mecanismos de carga y UPSERT
+    
 
-- Cache de consultas frecuentes (Redis opcional)
-- Paginación en endpoints
-- Índices en base de datos
-- Compresión de respuestas grandes
+### Hito 4: Dashboard
 
-## 🚀 Próximos Pasos
+*   Aplicación Angular base
+    
+*   Visualizaciones principales
+    
+*   Despliegue en Vercel/Netlify
+    
 
-1. Configurar estructura de carpetas
-2. Implementar extractores básicos para cada fuente
-3. Crear modelos de base de datos
-4. Desarrollar API básica
-5. Construir dashboard frontend
-6. Implementar automatización ETL
-7. Testing y validación
+### Hito 5: Monitorización Avanzada
 
+*   Dashboards de métricas ETL
+    
+*   Alertas proactivas
+    
+*   Documentación operativa
+    
+
+Estimación de Costos
+--------------------
+
+### Capa Gratuita Disponible
+
+*   **GitHub Actions**: ~2,000 minutos/mes (suficiente para uso estimado)
+    
+*   **Supabase**: 500MB base de datos + 1GB storage (adecuado para inicio)
+    
+*   **Vercel/Netlify**: Despliegue frontend gratuito
+    
+*   **Slack**: Webhooks gratuitos para alertas
+    
+
+### Puntos de Escalación Futura
+
+*   Supabase Pro: >500MB de datos o >50k filas/mes
+    
+*   GitHub Actions: >2,000 minutos/mes de procesamiento
+    
+*   Monitorización: Migración a DataDog si requiere analytics avanzados
+    
+
+Runbook Operativo
+-----------------
+
+### Procedimientos Comunes
+
+1.  **Ejecución Manual ETL**: Trigger via GitHub UI
+    
+2.  **Debug de Fallos**: Revisión de logs en GitHub Actions + tabla etl\_logs
+    
+3.  **Recuperación de Errores**: Re-ejecución con limpieza opcional de datos corruptos
+    
+4.  **Actualización de Scrapers**: Modificación de selectores ante cambios en fuentes
+    
+
+### Métricas de Salud
+
+*   Tiempo de ejecución promedio por fuente
+    
+*   Tasa de éxito de extracción (>95% objetivo)
+    
+*   Latencia datos fuente → dashboard (<24 horas)
+    
+*   Disponibilidad del dashboard (>99.5%)
