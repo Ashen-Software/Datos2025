@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { Product, ProductCreateDto, ProductUpdateDto } from '../models/product.model';
 
@@ -6,13 +6,13 @@ import { Product, ProductCreateDto, ProductUpdateDto } from '../models/product.m
   providedIn: 'root',
 })
 export class ProductsService {
-  private readonly tableName = 'productos';
+  private readonly tableName = signal('productos');
   private readonly supabase = inject(SupabaseService).client;
 
   async getProducts(): Promise<Product[]> {
     const { data, error } = await this.supabase
-      .from(this.tableName)
-      .select('*');
+      .from(this.tableName())
+      .select('*').range(0,9);
 
     if (error) {
       throw error;
@@ -23,7 +23,7 @@ export class ProductsService {
 
   async getProductById(id: number): Promise<Product | null> {
     const { data, error } = await this.supabase
-      .from(this.tableName)
+      .from(this.tableName())
       .select('*')
       .eq('id', id)
       .single();
@@ -37,7 +37,7 @@ export class ProductsService {
 
   async createProduct(product: ProductCreateDto): Promise<Product> {
     const { data, error } = await this.supabase
-      .from(this.tableName)
+      .from(this.tableName())
       .insert(product)
       .select()
       .single();
@@ -51,7 +51,7 @@ export class ProductsService {
 
   async updateProduct(id: number, updates: ProductUpdateDto): Promise<Product> {
     const { data, error } = await this.supabase
-      .from(this.tableName)
+      .from(this.tableName())
       .update(updates)
       .eq('id', id)
       .select()
@@ -66,7 +66,7 @@ export class ProductsService {
 
   async deleteProduct(id: number): Promise<void> {
     const { error } = await this.supabase
-      .from(this.tableName)
+      .from(this.tableName())
       .delete()
       .eq('id', id);
 
