@@ -1,5 +1,5 @@
-import { Injectable, signal } from '@angular/core';
-import { supabase } from '../shared/supabase-service';
+import { Injectable, signal, inject } from '@angular/core';
+import { SupabaseService } from '../shared/supabase-service';
 
 export interface Product {
   id: number;
@@ -12,9 +12,11 @@ export interface Product {
 })
 export class ProductsService {
   private readonly tableName = 'productos';
+  private supabaseService = inject(SupabaseService);
+  private supabase = this.supabaseService.supabaseClient;
 
   async getAllProducts() {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from(this.tableName)
       .select('*');
 
