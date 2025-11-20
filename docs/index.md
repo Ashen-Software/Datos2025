@@ -1,3 +1,14 @@
+# Documentación del Proyecto
+
+Bienvenido a la documentación técnica del proyecto.
+
+## Secciones
+
+- **Arquitectura**: Diagramas y decisiones de diseño
+- **API**: Documentación de endpoints
+- **Database**: Esquemas y modelos
+<!-- - **Guías**: Manuales de desarrollo y uso -->
+
 # Fuentes de datos
 
 - *Consolidación de liquidación de regalías por campo:* Información de liquidación definitiva de regalías por campo de hidrocarburos desde el año 2010 hasta la fecha.

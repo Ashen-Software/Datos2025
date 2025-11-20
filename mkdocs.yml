@@ -1,0 +1,46 @@
+site_name: Reto - Gas natural
+site_description: Documentación técnica del proyecto
+site_url: https://Juanqu261.github.io/nombre-repo/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.highlight
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: teal
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Modo oscuro
+    - scheme: dark
+      primary: teal
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Modo claro
+
+nav:
+  - Inicio: index.md
+  - Arquitectura:
+    - Overview: arquitectura/overview.md
+    - Diagramas: arquitectura/diagrama.md
+  - API:
+    - Endpoints: api/endpoints.md
+  - Base de Datos:
+    - Esquema: database/esquema.md
+  # - Guías:
+  #   - Desarrollo: guias/desarrollo.md
+  #   - Uso: guias/uso.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - toc:
+      permalink: true
