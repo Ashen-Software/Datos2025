@@ -14,42 +14,40 @@ permissions:
   id-token: write
 
 jobs:
-  build:
+  deploy-docs:
+    # Construcción y el despliegue en una sola etapa
     runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 
           
-      - name: Setup Python
+      - name: Setup Python Environment
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
           
-      - name: Install dependencies
+      - name: Install MkDocs Dependencies
         run: |
           pip install mkdocs mkdocs-material
           
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-        
-      - name: Build with MkDocs
+      - name: Setup GitHub Pages Directories
+        uses: actions/configure-pages@v3 
+          
+      - name: Build Documentation with MkDocs
         run: mkdocs build --site-dir site
-        
-      - name: Upload artifact
+          
+      - name: Upload Artifact for Deployment
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
