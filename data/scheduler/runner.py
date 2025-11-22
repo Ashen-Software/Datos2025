@@ -5,6 +5,7 @@ from logs_config.logger import app_logger as logger
 from scheduler.jobs import register_jobs, reload_jobs_if_changed
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.executors.pool import ThreadPoolExecutor
 
 ENV = os.getenv("ENVIRONMENT", "local")
 CONFIG_RELOAD_INTERVAL = int(os.getenv("CONFIG_RELOAD_INTERVAL", "120"))  # default 2 minutos
@@ -13,7 +14,18 @@ CONFIG_RELOAD_INTERVAL = int(os.getenv("CONFIG_RELOAD_INTERVAL", "120"))  # defa
 def start_scheduler():
     logging.getLogger('apscheduler').setLevel(logging.WARNING)
     
-    scheduler = BackgroundScheduler()
+    # Configurar un executor de hilos y defaults de job para evitar
+    # que tareas pesadas bloqueen la recarga y para controlar instancias
+    executors = {
+        'default': ThreadPoolExecutor(10),
+    }
+    job_defaults = {
+        'coalesce': False,
+        'max_instances': 2,
+        'misfire_grace_time': 60,
+    }
+
+    scheduler = BackgroundScheduler(executors=executors, job_defaults=job_defaults)
     
     logger.info("scheduler_starting", environment=ENV)
     
@@ -27,7 +39,10 @@ def start_scheduler():
             trigger=IntervalTrigger(seconds=CONFIG_RELOAD_INTERVAL),
             args=[scheduler],
             id="reload_config_job",
-            replace_existing=True
+            replace_existing=True,
+            max_instances=1,
+            coalesce=False,
+            misfire_grace_time=60,
         )
         logger.info("config_reloader_registered", interval_seconds=CONFIG_RELOAD_INTERVAL)
         

@@ -35,27 +35,34 @@ def get_sources():
 
 
 def run_check_updates(source):
-    from workflows.check_updates.run import check_updates_task
-    from workflows.full_etl.run import full_etl_task
-    
-    src_id = source['id']
+    src_id = source.get('id')
     src_name = source.get('name', src_id)
-    
+
     logger.info("check_updates_started", source_id=src_id, source_name=src_name)
-    
-    # check_updates_task espera el config completo, creamos uno con solo esta fuente
-    temp_config = {"sources": [source]}
-    changed_sources = check_updates_task(temp_config)
-    
-    if changed_sources:
-        logger.info("changes_detected", source_id=src_id, changed_count=len(changed_sources))
-        logger.info("full_etl_started", source_id=src_id)
-        
-        full_etl_task(changed_sources, temp_config)
-        
-        logger.info("full_etl_completed", source_id=src_id)
-    else:
-        logger.info("no_changes", source_id=src_id)
+
+    try:
+        # Importar aquí para evitar import cycles al cargar el paquete
+        from workflows.check_updates.run import check_updates_task
+        from workflows.full_etl.run import full_etl_task
+
+        # check_updates_task espera el config completo, creamos uno con solo esta fuente
+        temp_config = {"sources": [source]}
+        changed_sources = check_updates_task(temp_config)
+
+        if changed_sources:
+            logger.info("changes_detected", source_id=src_id, changed_count=len(changed_sources))
+            logger.info("full_etl_started", source_id=src_id)
+
+            full_etl_task(changed_sources, temp_config)
+
+            logger.info("full_etl_completed", source_id=src_id)
+        else:
+            logger.info("no_changes", source_id=src_id)
+
+    except Exception as e:
+        # Capturar cualquier excepción durante la ejecución del job para
+        # evitar que una excepción no manejada afecte al scheduler.
+        logger.error("run_check_updates_failed", source_id=src_id, error=str(e), exc_info=True)
 
 
 def register_jobs(scheduler: BackgroundScheduler):

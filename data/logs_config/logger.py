@@ -14,8 +14,8 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOG_ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 SERVICE_NAME = os.getenv("SERVICE_NAME", "etl_service")
 
-LOG_DIR = Path(__file__).parent / "logs"
-LOG_DIR.mkdir(exist_ok=True)
+LOG_DIR = Path(os.getenv("LOG_DIR", str(Path(__file__).parent / "logs")))
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 _working_directory = len(os.getcwd()) + 1
 
@@ -131,7 +131,14 @@ def configure_logger():
     file_handler.suffix = "%Y-%m-%d"
     file_handler.setFormatter(logging.Formatter('%(message)s'))
     
+    # Además de escribir al archivo, añadir handler a stdout para que
+    # `docker logs` capture también todas las entradas.
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(logging_level)
+    stream_handler.setFormatter(logging.Formatter('%(message)s'))
+
     root_logger.addHandler(file_handler)
+    root_logger.addHandler(stream_handler)
     
     # Procesadores comunes
     shared_processors = [
