@@ -1,6 +1,8 @@
 # Directorios
 
 ## Proceso ETL
+```text
+
 /Suria/
 │
 ├── data/                        ← ETL
@@ -8,7 +10,7 @@
 │   ├── requirements.txt
 │   ├── scheduler/
 │   │   ├── runner.py           ← Ejecuta workflows desde cron
-|   |   └── jobs.py
+│   │   └── jobs.py
 │   │
 │   ├── workflows/
 │   │   ├── check_updates/
@@ -28,3 +30,5 @@
 │   │
 │   └── services/
 │       └── backend_client.py    ← Comunicación con API del backend
+
+```

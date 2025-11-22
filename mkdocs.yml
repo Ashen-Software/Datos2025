@@ -28,8 +28,10 @@ nav:
   - Inicio: index.md
   - Arquitectura:
     - Overview: arquitectura/overview.md
-    - Implementación: arquitectura/implementacion.md
     - Diagrama: assets/diagrams/arquitectura.svg
+    - Implementación: arquitectura/implementacion.md
+    - Directorios: arquitectura/directorios.md
+    - Despliegue: assets/diagrams/pipeline_despliegue.svg
   - API:
     - Endpoints: api/endpoints.md
   - Base de Datos:
