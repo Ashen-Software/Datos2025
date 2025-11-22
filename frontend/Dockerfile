@@ -1,41 +1,35 @@
-# Stage 1: Build
+# Stage 1: Build the application
 FROM node:24-alpine AS builder
 
+# Set working directory
 WORKDIR /app
 
-# Declarar build arguments
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
+# Install pnpm
+RUN npm install -g pnpm
 
-# Establecer como variables de entorno para el build
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-
-# Copiar archivos de dependencias
+# Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Instalar pnpm y dependencias
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
-# Copiar el código fuente
+# Copy source code
 COPY . .
 
-# Build de la aplicación
+# Build the application
 RUN pnpm run build
 
-# Stage 2: Serve
-FROM node:24-alpine
+# Stage 2: Serve the application with Nginx
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Instalar un servidor HTTP simple
-RUN npm install -g serve
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copiar los archivos built desde el stage anterior
-COPY --from=builder /app/dist ./dist
+# Expose port 80
+EXPOSE 80
 
-# Exponer el puerto
-EXPOSE 3000
-
-# Comando para iniciar la aplicación
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
